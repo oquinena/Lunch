@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	c "github.com/TreyBastian/colourize"
 	"github.com/mmcdole/gofeed"
@@ -20,6 +21,23 @@ func main() {
 	b := flag.Bool("b", false, "Endast Birkaskolans lunch")
 	e := flag.Bool("e", false, "Visa endast Ekebyhovskolans lunch")
 	flag.Parse()
+
+	var dagar = map[string]time.Weekday{
+		"Måndag":  time.Monday,
+		"Tisdag":  time.Tuesday,
+		"Onsdag":  time.Wednesday,
+		"Torsdag": time.Thursday,
+		"Fredag":  time.Friday,
+		"Lördag":  time.Saturday,
+		"Söndag":  time.Sunday,
+	}
+
+	dag := time.Now().Weekday()
+	if dag == dagar["Lördag"] || dag == dagar["Söndag"] {
+		fmt.Println("Helg")
+		os.Exit(0)
+	}
+
 	birka, _ := lunch("birkaskolan")
 	ekebyhov, _ := lunch("ekebyhovskolan")
 
@@ -43,8 +61,8 @@ func lunch(skola string) (lunchalt, error) {
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURL("https://skolmaten.se/" + skola + "/rss/days/")
 	if err != nil {
-		fmt.Printf("Fel vid hämtning av feed, %s", err)
-		os.Exit(1)
+		fmt.Errorf("Fel vid hämtning av lunchalternativ")
+		return lv, err
 	}
 	l := feed.Items[0].Description
 	lunch := strings.Split(l, "<br/>")
@@ -52,4 +70,3 @@ func lunch(skola string) (lunchalt, error) {
 
 	return lv, err
 }
-
